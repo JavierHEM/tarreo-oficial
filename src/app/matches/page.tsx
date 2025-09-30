@@ -41,7 +41,7 @@ interface Tournament {
 
 export default function MatchesPage() {
   const supabase = useSupabaseClient()
-  const { session } = useSession()
+  const session = useSession()
 
   const [matches, setMatches] = useState<Match[]>([])
   const [tournaments, setTournaments] = useState<Tournament[]>([])

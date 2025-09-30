@@ -222,7 +222,7 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center text-sm text-gray-300">
                   <Users className="h-4 w-4 mr-2" />
-                  Aparecer en "Buscar jugadores"
+                  Aparecer en &quot;Buscar jugadores&quot;
                 </div>
                 <button
                   type="button"

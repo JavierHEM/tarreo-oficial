@@ -74,7 +74,7 @@ export default function TournamentDetailPage() {
     }
 
     setLoading(false)
-  }, [id, supabase, session?.user?.id])
+  }, [id, supabase, session?.user?.id, session?.user])
 
   useEffect(() => { if (id) fetchData() }, [id, fetchData])
 

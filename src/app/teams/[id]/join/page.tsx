@@ -15,9 +15,9 @@ export default function TeamJoinPage() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
-  if (!session) return null
-
   useEffect(() => {
+    if (!session) return
+    
     const guard = async () => {
       // No permitir que el capitán o ya miembros/pedidos pendientes soliciten
       const { data: team } = await supabase
@@ -60,12 +60,14 @@ export default function TeamJoinPage() {
   }, [session, supabase, teamId, router])
 
   const handleRequest = async (e: React.FormEvent) => {
+    if (!session?.user) return
+    
     e.preventDefault()
     setLoading(true)
     setMessage('')
     const { error } = await supabase.from('team_join_requests').insert({
       team_id: teamId,
-      player_id: session.user!.id,
+      player_id: session.user.id,
       status: 'pending'
     })
     if (error) setMessage(`Error: ${error.message}`)
@@ -74,6 +76,19 @@ export default function TeamJoinPage() {
       setTimeout(()=> router.push(`/teams/${teamId}`), 1200)
     }
     setLoading(false)
+  }
+
+  if (!session) {
+    return (
+      <>
+        <Navbar />
+        <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="card p-6 text-center">
+            <p className="text-gray-300">Cargando...</p>
+          </div>
+        </div>
+      </>
+    )
   }
 
   return (

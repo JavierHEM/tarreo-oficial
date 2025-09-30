@@ -66,14 +66,23 @@ export default function AdminMatchesPage() {
   // Estados para formularios
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingMatch, setEditingMatch] = useState<Match | null>(null)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    tournament_id: string
+    team1_id: string
+    team2_id: string
+    phase: string
+    round_number: number
+    match_date: string
+    status: 'scheduled' | 'in_progress' | 'finished'
+    notes: string
+  }>({
     tournament_id: '',
     team1_id: '',
     team2_id: '',
     phase: 'online_eliminations',
     round_number: 1,
     match_date: '',
-    status: 'scheduled' as const,
+    status: 'scheduled',
     notes: ''
   })
 
