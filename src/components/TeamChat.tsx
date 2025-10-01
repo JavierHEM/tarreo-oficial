@@ -52,6 +52,32 @@ export default function TeamChat({ teamId, teamName, isCaptain }: TeamChatProps)
     fetchMessages()
   }, [fetchMessages])
 
+  // Configurar Realtime para actualizaciones automáticas
+  useEffect(() => {
+    if (!session?.user) return
+
+    const channel = supabase
+      .channel(`team_messages_${teamId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'team_messages',
+          filter: `team_id=eq.${teamId}`
+        },
+        (payload) => {
+          console.log('Nuevo mensaje recibido:', payload)
+          fetchMessages() // Refrescar mensajes cuando llega uno nuevo
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [teamId, session?.user, supabase, fetchMessages])
+
   // Scroll automático al final
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -75,7 +101,7 @@ export default function TeamChat({ teamId, teamName, isCaptain }: TeamChatProps)
       if (error) throw error
 
       setNewMessage('')
-      fetchMessages() // Refrescar mensajes
+      // No necesitamos fetchMessages() aquí porque Realtime lo hará automáticamente
     } catch (error: any) {
       showNotification({
         type: 'error',
