@@ -5,10 +5,12 @@ import { useEffect, useState, useCallback } from 'react'
 import { Profile } from '@/types/supabase'
 import Navbar from '@/components/Navbar'
 import { Search, Users, Star, Clock, MessageCircle } from 'lucide-react'
+import { useNotifications } from '@/components/NotificationProvider'
 
 export default function FindPlayersPage() {
   const session = useSession()
   const supabase = useSupabaseClient()
+  const { showNotification } = useNotifications()
   const [players, setPlayers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -16,6 +18,10 @@ export default function FindPlayersPage() {
   const [positionFilter, setPositionFilter] = useState('')
   const [isLookingForTeam, setIsLookingForTeam] = useState(false)
   const [buttonLoading, setButtonLoading] = useState(false)
+  const [contactingPlayer, setContactingPlayer] = useState<string | null>(null)
+  const [showContactModal, setShowContactModal] = useState(false)
+  const [selectedPlayer, setSelectedPlayer] = useState<Profile | null>(null)
+  const [contactMessage, setContactMessage] = useState('')
 
   const games = ['Valorant', 'League of Legends', 'Fortnite', 'Overwatch 2', 'Age of Empires 2', 'Rocket League', 'Mortal Kombat 11', 'EA SPORTS FC', 'Mario Kart', 'UNO', 'Mitos y Leyendas']
 
@@ -85,6 +91,52 @@ export default function FindPlayersPage() {
     }
     
     setButtonLoading(false)
+  }
+
+  const handleContactPlayer = (player: Profile) => {
+    setSelectedPlayer(player)
+    setContactMessage('')
+    setShowContactModal(true)
+  }
+
+  const sendContactMessage = async () => {
+    if (!selectedPlayer || !contactMessage.trim()) {
+      showNotification({ 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Debes escribir un mensaje' 
+      })
+      return
+    }
+
+    setContactingPlayer(selectedPlayer.id)
+
+    const { error } = await supabase
+      .from('player_contacts')
+      .insert({
+        sender_id: session?.user?.id,
+        receiver_id: selectedPlayer.id,
+        message: contactMessage.trim()
+      })
+
+    if (error) {
+      showNotification({ 
+        type: 'error', 
+        title: 'Error', 
+        message: error.message 
+      })
+    } else {
+      showNotification({ 
+        type: 'success', 
+        title: 'Mensaje enviado', 
+        message: `Tu mensaje fue enviado a ${selectedPlayer.gamertag}` 
+      })
+      setShowContactModal(false)
+      setContactMessage('')
+      setSelectedPlayer(null)
+    }
+
+    setContactingPlayer(null)
   }
 
   if (!session) return null
@@ -228,8 +280,16 @@ export default function FindPlayersPage() {
                 )}
 
                 <div className="flex gap-2">
-                  <button className="btn-secondary flex-1 text-sm">
-                    <MessageCircle className="h-4 w-4 mr-1" />
+                  <button 
+                    onClick={() => handleContactPlayer(player)}
+                    disabled={contactingPlayer === player.id}
+                    className="btn-secondary flex-1 text-sm disabled:opacity-50"
+                  >
+                    {contactingPlayer === player.id ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1"></div>
+                    ) : (
+                      <MessageCircle className="h-4 w-4 mr-1" />
+                    )}
                     Contactar
                   </button>
                   <button className="btn-primary text-sm px-3">
@@ -241,6 +301,46 @@ export default function FindPlayersPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de Contacto */}
+      {showContactModal && selectedPlayer && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="card max-w-md w-full p-6">
+            <h3 className="text-xl font-bold mb-4">
+              Contactar a {selectedPlayer.gamertag}
+            </h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">
+                Mensaje
+              </label>
+              <textarea
+                value={contactMessage}
+                onChange={(e) => setContactMessage(e.target.value)}
+                placeholder="Escribe tu mensaje aquí..."
+                rows={4}
+                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowContactModal(false)}
+                className="btn-secondary flex-1"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={sendContactMessage}
+                disabled={contactingPlayer === selectedPlayer.id || !contactMessage.trim()}
+                className="btn-primary flex-1 disabled:opacity-50"
+              >
+                {contactingPlayer === selectedPlayer.id ? 'Enviando...' : 'Enviar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

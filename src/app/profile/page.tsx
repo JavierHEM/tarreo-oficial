@@ -11,6 +11,8 @@ interface ProfileForm {
   email: string
   full_name: string
   gamertag: string
+  rut: string
+  carrera: string
   preferred_games: string[]
   preferred_position: string
   available_schedule: string
@@ -55,6 +57,8 @@ export default function ProfilePage() {
         email: data.email || session.user.email || '',
         full_name: data.full_name || '',
         gamertag: data.gamertag || '',
+        rut: data.rut || '',
+        carrera: data.carrera || '',
         preferred_games: data.preferred_games || [],
         preferred_position: data.preferred_position || '',
         available_schedule: data.available_schedule || '',
@@ -87,19 +91,44 @@ export default function ProfilePage() {
       showNotification({ type: 'error', title: 'Validación', message: 'El gamertag debe tener al menos 3 caracteres.' })
       return
     }
+    if (!profile.rut || profile.rut.trim().length < 8) {
+      showNotification({ type: 'error', title: 'Validación', message: 'Debes ingresar un RUT válido.' })
+      return
+    }
+    if (!profile.carrera || profile.carrera.trim().length < 2) {
+      showNotification({ type: 'error', title: 'Validación', message: 'Debes ingresar tu carrera.' })
+      return
+    }
+    if (!profile.rut || profile.rut.trim().length < 8) {
+      showNotification({ type: 'error', title: 'Validación', message: 'Debes ingresar un RUT válido.' })
+      return
+    }
+    if (!profile.carrera || profile.carrera.trim().length < 2) {
+      showNotification({ type: 'error', title: 'Validación', message: 'Debes ingresar tu carrera.' })
+      return
+    }
     setSaving(true)
+    
+    const updateData: any = {
+      gamertag: profile.gamertag,
+      rut: profile.rut,
+      carrera: profile.carrera,
+      preferred_games: profile.preferred_games,
+      preferred_position: profile.preferred_position || null,
+      available_schedule: profile.available_schedule || null,
+      bio: profile.bio || null,
+      is_looking_for_team: profile.is_looking_for_team,
+      updated_at: new Date().toISOString()
+    }
+
+    // Solo actualizar full_name si el usuario lo proporcionó
+    if (profile.full_name && profile.full_name.trim()) {
+      updateData.full_name = profile.full_name.trim()
+    }
+
     const { error } = await supabase
       .from('profiles')
-      .update({
-        full_name: profile.full_name || profile.gamertag,
-        gamertag: profile.gamertag,
-        preferred_games: profile.preferred_games,
-        preferred_position: profile.preferred_position || null,
-        available_schedule: profile.available_schedule || null,
-        bio: profile.bio || null,
-        is_looking_for_team: profile.is_looking_for_team,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', session.user.id)
 
     if (error) {
@@ -157,6 +186,28 @@ export default function ProfilePage() {
                     type="text"
                     value={profile.gamertag}
                     onChange={(e) => setProfile({ ...profile, gamertag: e.target.value })}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">RUT</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: 12.345.678-9"
+                    value={profile.rut}
+                    onChange={(e) => setProfile({ ...profile, rut: e.target.value })}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Carrera</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Ingeniería Informática"
+                    value={profile.carrera}
+                    onChange={(e) => setProfile({ ...profile, carrera: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
                     required
                   />

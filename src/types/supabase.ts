@@ -4,6 +4,8 @@ export interface Profile {
     email: string
     full_name?: string
     gamertag?: string
+    rut?: string
+    carrera?: string
     role: 'admin' | 'gamer'
     elo_valorant?: number
     elo_lol?: number

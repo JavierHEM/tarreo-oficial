@@ -17,6 +17,8 @@ export default function AuthPage() {
   const [profileData, setProfileData] = useState({
     full_name: '',
     gamertag: '',
+    rut: '',
+    carrera: '',
     preferred_games: [] as string[],
     preferred_position: '',
     available_schedule: '',
@@ -36,11 +38,11 @@ export default function AuthPage() {
     // Consultamos directamente el perfil en la BD
     const { data: profile } = await supabase
       .from('profiles')
-      .select('gamertag')
+      .select('gamertag, rut, carrera')
       .eq('id', session.user.id)
       .single()
 
-    if (profile?.gamertag) {
+    if (profile?.gamertag && profile?.rut && profile?.carrera) {
       // Usuario tiene perfil completo, ir al dashboard
       router.push('/dashboard')
     } else {
@@ -171,6 +173,16 @@ export default function AuthPage() {
       setLoading(false)
       return
     }
+    if (!profileData.rut || profileData.rut.trim().length < 8) {
+      setMessage('Error: Debes ingresar un RUT válido')
+      setLoading(false)
+      return
+    }
+    if (!profileData.carrera || profileData.carrera.trim().length < 2) {
+      setMessage('Error: Debes ingresar tu carrera')
+      setLoading(false)
+      return
+    }
 
     console.log('Actualizando perfil con datos:', {
       id: session?.user?.id,
@@ -178,17 +190,25 @@ export default function AuthPage() {
       preferred_games: profileData.preferred_games
     })
 
+    const updateData: any = {
+      gamertag: profileData.gamertag,
+      rut: profileData.rut,
+      carrera: profileData.carrera,
+      preferred_games: profileData.preferred_games,
+      preferred_position: profileData.preferred_position,
+      available_schedule: profileData.available_schedule,
+      bio: profileData.bio,
+      updated_at: new Date().toISOString()
+    }
+
+    // Solo actualizar full_name si el usuario lo proporcionó
+    if (profileData.full_name && profileData.full_name.trim()) {
+      updateData.full_name = profileData.full_name.trim()
+    }
+
     const { data, error } = await supabase
       .from('profiles')
-      .update({
-        gamertag: profileData.gamertag,
-        full_name: profileData.full_name || profileData.gamertag,
-        preferred_games: profileData.preferred_games,
-        preferred_position: profileData.preferred_position,
-        available_schedule: profileData.available_schedule,
-        bio: profileData.bio,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', session?.user?.id)
       .select()
 
@@ -396,6 +416,28 @@ export default function AuthPage() {
                   value={profileData.gamertag}
                   onChange={(e) => setProfileData(prev => ({ ...prev, gamertag: e.target.value }))}
                   placeholder="Tu nombre de jugador"
+                  className="w-full px-4 py-2 bg-white/10 border border-white/30 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">RUT *</label>
+                <input
+                  type="text"
+                  value={profileData.rut}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, rut: e.target.value }))}
+                  placeholder="Ej: 12.345.678-9"
+                  className="w-full px-4 py-2 bg-white/10 border border-white/30 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-2">Carrera *</label>
+                <input
+                  type="text"
+                  value={profileData.carrera}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, carrera: e.target.value }))}
+                  placeholder="Ej: Ingeniería Informática"
                   className="w-full px-4 py-2 bg-white/10 border border-white/30 rounded-lg focus:ring-2 focus:ring-purple-500"
                   required
                 />

@@ -65,13 +65,24 @@ export default function TeamJoinPage() {
     e.preventDefault()
     setLoading(true)
     setMessage('')
-    const { error } = await supabase.from('team_join_requests').insert({
+    
+    console.log('Enviando solicitud de unirse al equipo:', {
+      teamId,
+      playerId: session.user.id,
+      status: 'pending'
+    })
+    
+    const { data, error } = await supabase.from('team_join_requests').insert({
       team_id: teamId,
       player_id: session.user.id,
       status: 'pending'
-    })
-    if (error) setMessage(`Error: ${error.message}`)
-    else {
+    }).select()
+    
+    console.log('Resultado de inserción:', { data, error })
+    
+    if (error) {
+      setMessage(`Error: ${error.message}`)
+    } else {
       setMessage('Solicitud enviada. Te avisaremos cuando el capitán responda.')
       setTimeout(()=> router.push(`/teams/${teamId}`), 1200)
     }

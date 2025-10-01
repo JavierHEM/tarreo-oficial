@@ -16,6 +16,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'gamer'>('all')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null)
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -27,9 +28,24 @@ export default function AdminUsersPage() {
     setLoading(false)
   }, [supabase])
 
+  const fetchCurrentUserProfile = useCallback(async () => {
+    if (!session?.user?.id) return
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single()
+    
+    setCurrentUserProfile(data)
+  }, [session?.user?.id, supabase])
+
   useEffect(() => {
-    if (session?.user) fetchUsers()
-  }, [session, fetchUsers])
+    if (session?.user) {
+      fetchUsers()
+      fetchCurrentUserProfile()
+    }
+  }, [session, fetchUsers, fetchCurrentUserProfile])
 
   const filtered = useMemo(() => {
     return users.filter((u) => {
@@ -45,9 +61,20 @@ export default function AdminUsersPage() {
 
   const handleToggleRole = async (user: Profile) => {
     const newRole = user.role === 'admin' ? 'gamer' : 'admin'
-    const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', user.id)
-    if (error) setMessage(`Error: ${error.message}`)
-    else {
+    console.log('Intentando cambiar rol:', { userId: user.id, currentRole: user.role, newRole })
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', user.id)
+      .select()
+    
+    console.log('Resultado de la actualización:', { data, error })
+    
+    if (error) {
+      console.error('Error detallado:', error)
+      setMessage(`Error: ${error.message}`)
+    } else {
       setMessage(`Rol actualizado a ${newRole}`)
       await fetchUsers()
     }
@@ -118,12 +145,19 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button className="btn-secondary text-sm" onClick={()=>handleToggleRole(u)}>
-                      <Shield className="h-4 w-4 mr-1" /> {u.role==='admin' ? 'Quitar admin' : 'Hacer admin'}
-                    </button>
-                    <button className="btn-secondary text-sm" onClick={()=>handleDelete(u)}>
-                      <Trash2 className="h-4 w-4 mr-1" /> Eliminar
-                    </button>
+                    {currentUserProfile?.role === 'admin' && (
+                      <>
+                        <button className="btn-secondary text-sm" onClick={()=>handleToggleRole(u)}>
+                          <Shield className="h-4 w-4 mr-1" /> {u.role==='admin' ? 'Quitar admin' : 'Hacer admin'}
+                        </button>
+                        <button className="btn-secondary text-sm" onClick={()=>handleDelete(u)}>
+                          <Trash2 className="h-4 w-4 mr-1" /> Eliminar
+                        </button>
+                      </>
+                    )}
+                    {currentUserProfile?.role !== 'admin' && (
+                      <span className="text-sm text-gray-400">Solo administradores pueden gestionar usuarios</span>
+                    )}
                   </div>
                 </div>
               ))}

@@ -38,16 +38,29 @@ export default function TeamDetailPage() {
       .eq('status', 'active')
       .order('joined_at', { ascending: true })
 
-    const { data: requestsData } = await supabase
+    const { data: requestsData, error: requestsError } = await supabase
       .from('team_join_requests')
       .select('*, player:profiles!team_join_requests_player_id_fkey(full_name, gamertag, id)')
       .eq('team_id', id)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
 
+    console.log('Team Join Requests Query:', {
+      teamId: id,
+      requestsData,
+      requestsError,
+      requestsCount: requestsData?.length || 0
+    })
+
     if (teamData) setTeam(teamData)
     if (membersData) setMembers(membersData as any)
-    if (requestsData) setRequests(requestsData as any)
+    if (requestsData) {
+      console.log('Setting requests state:', requestsData)
+      setRequests(requestsData as any)
+    } else {
+      console.log('No requests data received, setting empty array')
+      setRequests([])
+    }
     setLoading(false)
   }, [id, supabase])
 
@@ -58,6 +71,14 @@ export default function TeamDetailPage() {
   if (!session) return null
 
   const isCaptain = team?.captain_id === session.user?.id
+  
+  console.log('Render - Current state:', {
+    teamId: id,
+    requestsCount: requests.length,
+    requests: requests,
+    isCaptain,
+    loading
+  })
 
   const handleLeave = async () => {
     if (isCaptain) {
@@ -73,8 +94,16 @@ export default function TeamDetailPage() {
   }
 
   const handleAcceptRequest = async (requestId: number, playerId: string) => {
+    console.log('Aceptando solicitud:', {
+      requestId,
+      playerId,
+      teamId: id,
+      currentUserId: session?.user?.id,
+      isCaptain: team?.captain_id === session?.user?.id
+    })
+
     // Agregar como miembro activo
-    const { error: memberError } = await supabase
+    const { data: memberData, error: memberError } = await supabase
       .from('team_members')
       .insert({
         team_id: id,
@@ -82,6 +111,9 @@ export default function TeamDetailPage() {
         status: 'active',
         position: 'member'
       })
+      .select()
+
+    console.log('Resultado de inserción en team_members:', { memberData, memberError })
 
     if (memberError) {
       setMessage(`Error: ${memberError.message}`)
