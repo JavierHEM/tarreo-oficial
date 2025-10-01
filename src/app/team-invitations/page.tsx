@@ -5,6 +5,7 @@ import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 import Navbar from '@/components/Navbar'
 import { useNotifications } from '@/components/NotificationProvider'
 import { Users, CheckCircle, XCircle, Clock, Calendar } from 'lucide-react'
+import Link from 'next/link'
 
 interface TeamInvitation {
   id: number
@@ -138,8 +139,18 @@ export default function TeamInvitationsPage() {
       <Navbar />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Invitaciones de Equipo</h1>
-          <p className="text-gray-300">Gestiona las invitaciones que has recibido para unirte a equipos</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Invitaciones de Equipo</h1>
+              <p className="text-gray-300">Gestiona las invitaciones que has recibido para unirte a equipos</p>
+            </div>
+            <Link 
+              href="/team-invitations/sent" 
+              className="btn-secondary text-sm"
+            >
+              Ver Invitaciones Enviadas
+            </Link>
+          </div>
         </div>
 
         {loading ? (

@@ -85,12 +85,52 @@ export default function TeamDetailPage() {
       alert('El capitán no puede abandonar su equipo. Transfiere la capitanía o elimina el equipo.')
       return
     }
+    
+    const confirmLeave = confirm('¿Estás seguro de que quieres abandonar este equipo?')
+    if (!confirmLeave) return
+    
     const { error } = await supabase
       .from('team_members')
       .delete()
       .eq('team_id', id)
       .eq('player_id', session.user!.id)
-    if (!error) router.push('/teams')
+    
+    if (!error) {
+      setMessage('Has abandonado el equipo exitosamente')
+      showNotification({
+        type: 'success',
+        title: 'Equipo abandonado',
+        message: 'Has salido del equipo correctamente'
+      })
+      setTimeout(() => router.push('/teams'), 1500)
+    } else {
+      setMessage(`Error: ${error.message}`)
+    }
+  }
+
+  const handleKickMember = async (memberId: string, memberGamertag: string) => {
+    if (!isCaptain) return
+    
+    const confirmKick = confirm(`¿Estás seguro de que quieres expulsar a ${memberGamertag} del equipo?`)
+    if (!confirmKick) return
+    
+    const { error } = await supabase
+      .from('team_members')
+      .delete()
+      .eq('team_id', id)
+      .eq('player_id', memberId)
+    
+    if (!error) {
+      setMessage(`${memberGamertag} ha sido expulsado del equipo`)
+      showNotification({
+        type: 'success',
+        title: 'Miembro expulsado',
+        message: `${memberGamertag} ha sido removido del equipo`
+      })
+      fetchData() // Refrescar datos
+    } else {
+      setMessage(`Error: ${error.message}`)
+    }
   }
 
   const handleAcceptRequest = async (requestId: number, playerId: string) => {
@@ -160,6 +200,60 @@ export default function TeamDetailPage() {
     fetchData() // Refrescar datos
   }
 
+  const handleTransferCaptaincy = async (newCaptainId: string, newCaptainGamertag: string) => {
+    if (!isCaptain) return
+    
+    const confirmTransfer = confirm(`¿Estás seguro de que quieres transferir la capitanía a ${newCaptainGamertag}? Esta acción no se puede deshacer.`)
+    if (!confirmTransfer) return
+    
+    // Actualizar el capitán del equipo
+    const { error: teamError } = await supabase
+      .from('teams')
+      .update({ captain_id: newCaptainId })
+      .eq('id', id)
+    
+    if (teamError) {
+      setMessage(`Error: ${teamError.message}`)
+      return
+    }
+    
+    // Actualizar posiciones en team_members
+    const { error: membersError } = await supabase
+      .from('team_members')
+      .update({ position: 'member' })
+      .eq('team_id', id)
+      .eq('position', 'captain')
+    
+    if (membersError) {
+      setMessage(`Error: ${membersError.message}`)
+      return
+    }
+    
+    // Hacer al nuevo capitán
+    const { error: newCaptainError } = await supabase
+      .from('team_members')
+      .update({ position: 'captain' })
+      .eq('team_id', id)
+      .eq('player_id', newCaptainId)
+    
+    if (newCaptainError) {
+      setMessage(`Error: ${newCaptainError.message}`)
+      return
+    }
+    
+    setMessage(`Capitanía transferida a ${newCaptainGamertag}`)
+    showNotification({
+      type: 'success',
+      title: 'Capitanía transferida',
+      message: `${newCaptainGamertag} es ahora el nuevo capitán del equipo`
+    })
+    
+    // Redirigir después de un momento
+    setTimeout(() => {
+      router.push('/teams')
+    }, 2000)
+  }
+
   return (
     <>
       <Navbar />
@@ -207,12 +301,64 @@ export default function TeamDetailPage() {
               {members.length === 0 ? (
                 <p className="text-gray-400">No hay miembros.</p>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {members.map((m) => (
-                    <span key={m.id} className="bg-white/10 px-3 py-1 rounded text-sm">
-                      {m.player?.gamertag || m.player?.full_name}
-                    </span>
-                  ))}
+                <div className="space-y-3">
+                  {members.map((m) => {
+                    const isCurrentUser = m.player_id === session?.user?.id
+                    const isMember = m.position === 'member'
+                    const isCaptainMember = m.position === 'captain'
+                    
+                    return (
+                      <div key={m.id} className="bg-white/5 rounded-lg p-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div>
+                            <div className="flex items-center">
+                              <span className="font-medium">
+                                {m.player?.gamertag || m.player?.full_name}
+                              </span>
+                              {isCaptainMember && (
+                                <Crown className="h-4 w-4 ml-2 text-yellow-400" />
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-400">
+                              {isCaptainMember ? 'Capitán' : 'Miembro'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          {/* Botón para abandonar equipo (solo para miembros) */}
+                          {isCurrentUser && isMember && (
+                            <button
+                              onClick={handleLeave}
+                              className="btn-secondary text-sm text-red-300 hover:bg-red-500/20"
+                            >
+                              <XCircle className="h-4 w-4 mr-1" /> Abandonar
+                            </button>
+                          )}
+                          
+                          {/* Botones para capitán */}
+                          {isCaptain && !isCurrentUser && (
+                            <>
+                              <button
+                                onClick={() => handleKickMember(m.player_id, m.player?.gamertag || m.player?.full_name)}
+                                className="btn-secondary text-sm text-red-300 hover:bg-red-500/20"
+                              >
+                                <XCircle className="h-4 w-4 mr-1" /> Expulsar
+                              </button>
+                              {isMember && (
+                                <button
+                                  onClick={() => handleTransferCaptaincy(m.player_id, m.player?.gamertag || m.player?.full_name)}
+                                  className="btn-secondary text-sm text-yellow-300 hover:bg-yellow-500/20"
+                                >
+                                  <Crown className="h-4 w-4 mr-1" /> Hacer Capitán
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
