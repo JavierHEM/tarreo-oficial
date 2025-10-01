@@ -14,9 +14,11 @@ import {
   Trash2,
   Eye,
   AlertCircle,
-  Swords
+  Swords,
+  BarChart3
 } from 'lucide-react'
 import Link from 'next/link'
+import AdminDashboard from '@/components/AdminDashboard'
 
 // Componentes temporales hasta que se implementen
 const AdminOverview = () => (
@@ -101,7 +103,7 @@ export default function AdminPage() {
   const supabase = useSupabaseClient()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('dashboard')
   
   // Data states
   const [platforms, setPlatforms] = useState<Platform[]>([])
@@ -273,6 +275,7 @@ export default function AdminPage() {
         <div className="card p-6 mb-8">
           <div className="flex flex-wrap gap-2">
             {[
+              { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
               { id: 'overview', label: 'Resumen', icon: Eye },
               { id: 'games', label: 'Juegos', icon: Gamepad2 },
               { id: 'tournaments', label: 'Torneos', icon: Trophy },
@@ -296,6 +299,12 @@ export default function AdminPage() {
         </div>
 
         {/* Tab Content */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-8">
+            <AdminDashboard />
+          </div>
+        )}
+
         {activeTab === 'overview' && (
           <div className="space-y-8">
             <AdminOverview />

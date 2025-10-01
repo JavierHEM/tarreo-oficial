@@ -200,6 +200,104 @@ export default function TeamDetailPage() {
     fetchData() // Refrescar datos
   }
 
+  const handleDeleteTeam = async () => {
+    if (!isCaptain) return
+    
+    // Verificar que no hay miembros activos
+    if (members.length > 1) { // Más de 1 porque el capitán cuenta como miembro
+      showNotification({
+        type: 'error',
+        title: 'No se puede eliminar el equipo',
+        message: 'Debes expulsar a todos los miembros antes de eliminar el equipo'
+      })
+      return
+    }
+    
+    const confirmDelete = confirm(`¿Estás seguro de que quieres eliminar el equipo "${team?.name}"? Esta acción no se puede deshacer y eliminará todos los datos del equipo.`)
+    if (!confirmDelete) return
+    
+    try {
+      // 1. Eliminar todos los miembros del equipo (por si acaso)
+      const { error: membersError } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('team_id', id)
+      
+      if (membersError) {
+        showNotification({
+          type: 'error',
+          title: 'Error al eliminar miembros',
+          message: membersError.message
+        })
+        return
+      }
+      
+      // 2. Eliminar solicitudes de ingreso
+      const { error: requestsError } = await supabase
+        .from('team_join_requests')
+        .delete()
+        .eq('team_id', id)
+      
+      if (requestsError) {
+        console.error('Error eliminando solicitudes:', requestsError)
+        // No bloquear por este error
+      }
+      
+      // 3. Eliminar mensajes del chat del equipo
+      const { error: messagesError } = await supabase
+        .from('team_messages')
+        .delete()
+        .eq('team_id', id)
+      
+      if (messagesError) {
+        console.error('Error eliminando mensajes:', messagesError)
+        // No bloquear por este error
+      }
+      
+      // 4. Eliminar registros de torneos
+      const { error: registrationsError } = await supabase
+        .from('tournament_registrations')
+        .delete()
+        .eq('team_id', id)
+      
+      if (registrationsError) {
+        console.error('Error eliminando registros:', registrationsError)
+        // No bloquear por este error
+      }
+      
+      // 5. Finalmente, eliminar el equipo
+      const { error: teamError } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', id)
+      
+      if (teamError) {
+        showNotification({
+          type: 'error',
+          title: 'Error al eliminar equipo',
+          message: teamError.message
+        })
+        return
+      }
+      
+      showNotification({
+        type: 'success',
+        title: 'Equipo eliminado',
+        message: `El equipo "${team?.name}" ha sido eliminado exitosamente`
+      })
+      
+      // Redirigir al dashboard
+      router.push('/dashboard')
+      
+    } catch (error: any) {
+      showNotification({
+        type: 'error',
+        title: 'Error inesperado',
+        message: error.message || 'Ocurrió un error al eliminar el equipo'
+      })
+    }
+  }
+
   const handleTransferCaptaincy = async (newCaptainId: string, newCaptainGamertag: string) => {
     if (!isCaptain) return
     
@@ -404,6 +502,32 @@ export default function TeamDetailPage() {
                 teamName={team?.name || ''} 
                 isCaptain={isCaptain} 
               />
+            )}
+
+            {/* Acciones del Capitán */}
+            {isCaptain && (
+              <div className="card p-6 border-red-500/30">
+                <h3 className="text-lg font-semibold mb-4 text-red-400 flex items-center">
+                  <Crown className="h-5 w-5 mr-2" />
+                  Acciones del Capitán
+                </h3>
+                <div className="space-y-4">
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                    <h4 className="font-medium text-red-300 mb-2">⚠️ Eliminar Equipo</h4>
+                    <p className="text-sm text-gray-300 mb-3">
+                      Esta acción eliminará permanentemente el equipo y todos sus datos. 
+                      Asegúrate de haber expulsado a todos los miembros antes de proceder.
+                    </p>
+                    <button
+                      onClick={handleDeleteTeam}
+                      className="btn-primary bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar Equipo
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
 
             {message && (

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react'
 import Navbar from '@/components/Navbar'
 import { Profile } from '@/types/supabase'
-import { AlertCircle, CheckCircle2, Edit, Search, Shield, Trash2, User } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Edit, Search, Shield, Trash2, User, Crown } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AdminUsersPage() {
@@ -60,6 +60,12 @@ export default function AdminUsersPage() {
   }, [users, query, roleFilter])
 
   const handleToggleRole = async (user: Profile) => {
+    // Validación especial para javier@inacapmail.cl
+    if (user.email === 'javier@inacapmail.cl' && user.role === 'admin') {
+      setMessage('¡Que te habrás imaginado insecto! YO SOY DIOS AQUÍ 🦗')
+      return
+    }
+    
     const newRole = user.role === 'admin' ? 'gamer' : 'admin'
     console.log('Intentando cambiar rol:', { userId: user.id, currentRole: user.role, newRole })
     
@@ -81,12 +87,89 @@ export default function AdminUsersPage() {
   }
 
   const handleDelete = async (user: Profile) => {
-    if (!confirm(`¿Eliminar perfil de ${user.email}?`)) return
-    const { error } = await supabase.from('profiles').delete().eq('id', user.id)
-    if (error) setMessage(`Error: ${error.message}`)
-    else {
-      setMessage('Perfil eliminado')
-      await fetchUsers()
+    // Validación especial para javier@inacapmail.cl
+    if (user.email === 'javier@inacapmail.cl') {
+      setMessage('¡Que te habrás imaginado insecto! YO SOY DIOS AQUÍ 🦗')
+      return
+    }
+    
+    // Si el usuario es admin, primero quitar el rol de admin
+    if (user.role === 'admin') {
+      const confirmRemoveAdmin = confirm(`El usuario ${user.email} es administrador. ¿Quieres quitarle el rol de admin y luego eliminarlo?`)
+      if (!confirmRemoveAdmin) return
+      
+      // Primero quitar el rol de admin
+      const { error: roleError } = await supabase
+        .from('profiles')
+        .update({ role: 'gamer' })
+        .eq('id', user.id)
+      
+      if (roleError) {
+        setMessage(`Error al quitar rol de admin: ${roleError.message}`)
+        return
+      }
+    }
+    
+    const confirmDelete = confirm(`¿Eliminar perfil de ${user.email}? Esta acción no se puede deshacer.`)
+    if (!confirmDelete) return
+    
+    try {
+      // Eliminar registros relacionados primero
+      
+      // 1. Eliminar miembros de equipos
+      const { error: teamMembersError } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('player_id', user.id)
+      
+      if (teamMembersError) {
+        console.error('Error eliminando miembros de equipos:', teamMembersError)
+      }
+      
+      // 2. Eliminar solicitudes de equipos
+      const { error: teamRequestsError } = await supabase
+        .from('team_join_requests')
+        .delete()
+        .eq('player_id', user.id)
+      
+      if (teamRequestsError) {
+        console.error('Error eliminando solicitudes de equipos:', teamRequestsError)
+      }
+      
+      // 3. Eliminar mensajes de chat
+      const { error: messagesError } = await supabase
+        .from('team_messages')
+        .delete()
+        .eq('sender_id', user.id)
+      
+      if (messagesError) {
+        console.error('Error eliminando mensajes:', messagesError)
+      }
+      
+      // 4. Eliminar mensajes de contacto
+      const { error: contactsError } = await supabase
+        .from('player_contacts')
+        .delete()
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      
+      if (contactsError) {
+        console.error('Error eliminando contactos:', contactsError)
+      }
+      
+      // 5. Finalmente, eliminar el perfil
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id)
+      
+      if (error) {
+        setMessage(`Error: ${error.message}`)
+      } else {
+        setMessage('Usuario eliminado exitosamente')
+        await fetchUsers()
+      }
+    } catch (error: any) {
+      setMessage(`Error inesperado: ${error.message}`)
     }
   }
 
@@ -131,12 +214,21 @@ export default function AdminUsersPage() {
           ) : (
             <div className="space-y-2">
               {filtered.map((u) => (
-                <div key={u.id} className="bg-white/5 rounded-lg p-4 flex items-center justify-between">
+                <div key={u.id} className={`bg-white/5 rounded-lg p-4 flex items-center justify-between ${u.email === 'javier@inacapmail.cl' ? 'border-2 border-yellow-500/50 bg-yellow-500/10' : ''}`}>
                   <div>
-                    <p className="font-semibold">{u.gamertag || u.full_name || u.email}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold">{u.gamertag || u.full_name || u.email}</p>
+                      {u.email === 'javier@inacapmail.cl' && (
+                        <div title="Super Admin - Protegido">
+                          <Crown className="h-4 w-4 text-yellow-400" />
+                        </div>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-400">{u.email}</p>
                     <div className="text-xs mt-1 flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-white/10">{u.role}</span>
+                      <span className={`px-2 py-0.5 rounded ${u.email === 'javier@inacapmail.cl' ? 'bg-yellow-500/20 text-yellow-300' : 'bg-white/10'}`}>
+                        {u.role} {u.email === 'javier@inacapmail.cl' ? '(PROTEGIDO)' : ''}
+                      </span>
                       {u.gamertag ? (
                         <span className="flex items-center text-green-300"><CheckCircle2 className="h-3 w-3 mr-1" /> perfil completo</span>
                       ) : (

@@ -66,9 +66,36 @@ export default function TeamChat({ teamId, teamName, isCaptain }: TeamChatProps)
           table: 'team_messages',
           filter: `team_id=eq.${teamId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Nuevo mensaje recibido:', payload)
-          fetchMessages() // Refrescar mensajes cuando llega uno nuevo
+          
+          // Obtener información del sender para el nuevo mensaje
+          const { data: senderData } = await supabase
+            .from('profiles')
+            .select('gamertag, full_name')
+            .eq('id', payload.new.sender_id)
+            .single()
+          
+          if (senderData) {
+            const newMessage: Message = {
+              id: payload.new.id,
+              sender_id: payload.new.sender_id,
+              sender_gamertag: senderData.gamertag || '',
+              sender_name: senderData.full_name || '',
+              message: payload.new.message,
+              message_type: payload.new.message_type || 'text',
+              created_at: payload.new.created_at,
+              is_own_message: payload.new.sender_id === session?.user?.id
+            }
+            
+            setMessages(prev => {
+              // Evitar duplicados
+              if (prev.some(msg => msg.id === newMessage.id)) {
+                return prev
+              }
+              return [...prev, newMessage]
+            })
+          }
         }
       )
       .subscribe()
@@ -76,7 +103,7 @@ export default function TeamChat({ teamId, teamName, isCaptain }: TeamChatProps)
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [teamId, session?.user, supabase, fetchMessages])
+  }, [teamId, session?.user, supabase])
 
   // Scroll automático al final
   useEffect(() => {

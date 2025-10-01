@@ -144,68 +144,61 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="card p-6">
+        {/* Stats Cards - Optimizadas para jugador */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="card p-4">
             <div className="flex items-center">
-              <Users className="h-8 w-8 text-red-500 mr-3" />
+              <Users className="h-6 w-6 text-red-500 mr-2" />
               <div>
-                <p className="text-2xl font-bold">{stats.totalTeams}</p>
-                <p className="text-sm text-gray-400">Equipos Totales</p>
+                <p className="text-xl font-bold">{myTeams.length}</p>
+                <p className="text-xs text-gray-400">Mis Equipos</p>
               </div>
             </div>
           </div>
 
-          <div className="card p-6">
+          <div className="card p-4">
             <div className="flex items-center">
-              <Trophy className="h-8 w-8 text-red-500 mr-3" />
+              <Trophy className="h-6 w-6 text-red-500 mr-2" />
               <div>
-                <p className="text-2xl font-bold">{stats.totalTournaments}</p>
-                <p className="text-sm text-gray-400">Torneos</p>
+                <p className="text-xl font-bold">{stats.myRegistrations}</p>
+                <p className="text-xs text-gray-400">Mis Inscripciones</p>
               </div>
             </div>
           </div>
 
-          <div className="card p-6">
+          <div className="card p-4">
             <div className="flex items-center">
-              <Target className="h-8 w-8 text-red-500 mr-3" />
+              <Calendar className="h-6 w-6 text-red-500 mr-2" />
               <div>
-                <p className="text-2xl font-bold">{stats.myRegistrations}</p>
-                <p className="text-sm text-gray-400">Mis Inscripciones</p>
+                <p className="text-xl font-bold">{nextImportantDate ? new Date(nextImportantDate).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' }) : '—'}</p>
+                <p className="text-xs text-gray-400">Próxima fecha</p>
               </div>
             </div>
           </div>
 
-          <div className="card p-6">
-            <div className="flex items-center">
-              <Calendar className="h-8 w-8 text-red-500 mr-3" />
-              <div>
-                <p className="text-2xl font-bold">{nextImportantDate ? new Date(nextImportantDate).toLocaleDateString('es-CL') : '—'}</p>
-                <p className="text-sm text-gray-400">Próxima fecha</p>
+          {pendingCaptainRequests > 0 && (
+            <div className="card p-4">
+              <div className="flex items-center">
+                <Users className="h-6 w-6 text-yellow-400 mr-2" />
+                <div>
+                  <p className="text-xl font-bold">{pendingCaptainRequests}</p>
+                  <p className="text-xs text-gray-400">Solicitudes</p>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="card p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-red-500 mr-3" />
-              <div>
-                <p className="text-2xl font-bold">{pendingCaptainRequests}</p>
-                <p className="text-sm text-gray-400">Solicitudes pendientes</p>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Notificaciones de Torneos */}
         <TournamentNotifications />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-          {/* My Teams */}
+        {/* Mi Equipo - Compacto */}
+        <div className="mb-8">
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold flex items-center">
                 <Users className="h-5 w-5 mr-2" />
-                Mis Equipos
+                Mi Equipo
               </h2>
               <Link href="/teams/create" className="btn-secondary text-sm">
                 <Plus className="h-4 w-4 mr-1" />
@@ -214,34 +207,34 @@ export default function Dashboard() {
             </div>
 
             {myTeams.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No tienes equipos aún</p>
-                <Link href="/teams/create" className="btn-primary mt-4 inline-block">
+              <div className="text-center py-6 text-gray-400">
+                <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No tienes equipos aún</p>
+                <Link href="/teams/create" className="btn-primary mt-2 inline-block text-sm">
                   Crear tu primer equipo
                 </Link>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {myTeams.map((team) => (
                   <div key={team.id} className="bg-white/5 rounded-lg p-4 hover:bg-white/10 transition">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold flex items-center">
+                      <div className="flex-1">
+                        <h3 className="font-semibold flex items-center text-sm">
                           {team.name}
                           {team.captain_id === session?.user?.id && (
-                            <Crown className="h-4 w-4 ml-2 text-yellow-400" />
+                            <Crown className="h-3 w-3 ml-1 text-yellow-400" />
                           )}
                         </h3>
-                        <p className="text-sm text-gray-400">
+                        <p className="text-xs text-gray-400">
                           Capitán: {team.captain?.gamertag || team.captain?.full_name}
                         </p>
                       </div>
                       <Link
                         href={`/teams/${team.id}`}
-                        className="btn-secondary text-sm"
+                        className="btn-secondary text-xs ml-2"
                       >
-                        Ver Equipo
+                        Ver
                       </Link>
                     </div>
                   </div>
@@ -249,95 +242,102 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+        </div>
 
-          {/* Active Tournaments */}
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold flex items-center">
-                <Trophy className="h-5 w-5 mr-2" />
-                Torneos Activos
-              </h2>
-              <Link href="/tournaments" className="btn-secondary text-sm">
-                Ver Todos
-              </Link>
+        {/* Torneos Activos - Expandido */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold flex items-center">
+              <Trophy className="h-5 w-5 mr-2" />
+              Torneos Activos
+            </h2>
+            <Link href="/tournaments" className="btn-secondary text-sm">
+              Ver Todos
+            </Link>
+          </div>
+
+          {activeTournaments.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No hay torneos activos</p>
             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {activeTournaments.map((t: any) => {
+                const statusInfo = (() => {
+                  const now = new Date()
+                  const regStart = t.registration_start ? new Date(t.registration_start) : null
+                  const regEnd = t.registration_end ? new Date(t.registration_end) : null
+                  const onlineStart = t.online_phase_start ? new Date(t.online_phase_start) : null
+                  const presencialDate = t.presencial_date ? new Date(t.presencial_date) : null
+                  if (t.status === 'finished') return { label: 'Finalizado', cls: 'bg-gray-500/20 text-gray-300' }
+                  if (presencialDate && now >= presencialDate) return { label: 'Fase Presencial', cls: 'bg-purple-500/20 text-purple-300' }
+                  if (onlineStart && now >= onlineStart) return { label: 'Fase Online', cls: 'bg-blue-500/20 text-blue-300' }
+                  if (regEnd && now > regEnd) return { label: 'Registro Cerrado', cls: 'bg-orange-500/20 text-orange-300' }
+                  if (regStart && now >= regStart) return { label: 'Registro Abierto', cls: 'bg-green-500/20 text-green-300' }
+                  return { label: 'Próximamente', cls: 'bg-yellow-500/20 text-yellow-300' }
+                })()
 
-            {activeTournaments.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No hay torneos activos</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {activeTournaments.map((t: any) => {
-                  const statusInfo = (() => {
-                    const now = new Date()
-                    const regStart = t.registration_start ? new Date(t.registration_start) : null
-                    const regEnd = t.registration_end ? new Date(t.registration_end) : null
-                    const onlineStart = t.online_phase_start ? new Date(t.online_phase_start) : null
-                    const presencialDate = t.presencial_date ? new Date(t.presencial_date) : null
-                    if (t.status === 'finished') return { label: 'Finalizado', cls: 'bg-gray-500/20 text-gray-300' }
-                    if (presencialDate && now >= presencialDate) return { label: 'Fase Presencial', cls: 'bg-purple-500/20 text-purple-300' }
-                    if (onlineStart && now >= onlineStart) return { label: 'Fase Online', cls: 'bg-blue-500/20 text-blue-300' }
-                    if (regEnd && now > regEnd) return { label: 'Registro Cerrado', cls: 'bg-orange-500/20 text-orange-300' }
-                    if (regStart && now >= regStart) return { label: 'Registro Abierto', cls: 'bg-green-500/20 text-green-300' }
-                    return { label: 'Próximamente', cls: 'bg-yellow-500/20 text-yellow-300' }
-                  })()
+                const registrationsCount = t.registrations?.[0]?.count || 0
+                const isFull = t.max_teams && registrationsCount >= t.max_teams
 
-                  const registrationsCount = t.registrations?.[0]?.count || 0
-                  const isFull = t.max_teams && registrationsCount >= t.max_teams
-
-                  return (
-                    <div key={t.id} className="bg-white/5 rounded-lg p-4 hover:bg-white/10 transition">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold">{t.name}</h3>
-                            <span className={`px-2 py-1 rounded text-xs ${statusInfo.cls}`}>{statusInfo.label}</span>
-                          </div>
-                          <p className="text-sm text-gray-400">
+                return (
+                  <div key={t.id} className="bg-white/5 rounded-lg p-4 hover:bg-white/10 transition">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-sm mb-1">{t.name}</h3>
+                          <p className="text-xs text-gray-400 mb-2">
                             {t.game?.name}
                           </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Equipos: {registrationsCount} / {t.max_teams || '∞'} {isFull && <span className="text-red-400">(COMPLETO)</span>}
-                          </p>
                         </div>
+                        <span className={`px-2 py-1 rounded text-xs ${statusInfo.cls}`}>
+                          {statusInfo.label}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-gray-400">
+                          {registrationsCount} / {t.max_teams || '∞'} equipos
+                          {isFull && <span className="text-red-400 ml-1">(COMPLETO)</span>}
+                        </p>
                         <Link
                           href={`/tournaments/${t.id}`}
-                          className="btn-secondary text-sm"
+                          className="btn-secondary text-xs"
                         >
-                          Ver Torneo
+                          Ver
                         </Link>
                       </div>
                     </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-8">
-          <h2 className="text-xl font-bold mb-4">Acciones Rápidas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link href="/find-players" className="card p-6 hover:bg-white/15 transition text-center">
-              <Users className="h-8 w-8 mx-auto mb-2 text-red-500" />
-              <h3 className="font-semibold mb-1">Buscar Jugadores</h3>
-              <p className="text-sm text-gray-400">Encuentra compañeros de equipo</p>
-            </Link>
-
-            <Link href="/tournaments" className="card p-6 hover:bg-white/15 transition text-center">
-              <Trophy className="h-8 w-8 mx-auto mb-2 text-red-500" />
-              <h3 className="font-semibold mb-1">Explorar Torneos</h3>
-              <p className="text-sm text-gray-400">Ve todos los torneos disponibles</p>
-            </Link>
-
-            <Link href="/profile" className="card p-6 hover:bg-white/15 transition text-center">
-              <Target className="h-8 w-8 mx-auto mb-2 text-red-500" />
-              <h3 className="font-semibold mb-1">Mi Perfil</h3>
-              <p className="text-sm text-gray-400">Actualiza tu información</p>
-            </Link>
+        {/* Quick Actions - Compacto */}
+        <div className="mt-6">
+          <div className="card p-4">
+            <h3 className="text-lg font-semibold mb-3">Acciones Rápidas</h3>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/find-players" className="btn-secondary text-sm flex items-center">
+                <Users className="h-4 w-4 mr-1" />
+                Buscar Jugadores
+              </Link>
+              <Link href="/tournaments" className="btn-secondary text-sm flex items-center">
+                <Trophy className="h-4 w-4 mr-1" />
+                Explorar Torneos
+              </Link>
+              <Link href="/profile" className="btn-secondary text-sm flex items-center">
+                <Target className="h-4 w-4 mr-1" />
+                Mi Perfil
+              </Link>
+              <Link href="/matches" className="btn-secondary text-sm flex items-center">
+                <Trophy className="h-4 w-4 mr-1" />
+                Ver Matches
+              </Link>
+            </div>
           </div>
         </div>
       </div>
