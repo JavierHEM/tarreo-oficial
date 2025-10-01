@@ -71,7 +71,7 @@ export default function FindPlayersPage() {
 
     setPlayers(filteredData)
     setLoading(false)
-  }, [searchTerm, gameFilter, positionFilter, session?.user?.id, session?.user, supabase])
+  }, [searchTerm, gameFilter, positionFilter, session?.user, supabase])
 
   useEffect(() => {
     fetchPlayers()

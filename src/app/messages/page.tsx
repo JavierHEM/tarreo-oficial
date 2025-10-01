@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 import Navbar from '@/components/Navbar'
 import { useNotifications } from '@/components/NotificationProvider'
@@ -37,7 +37,7 @@ export default function MessagesPage() {
   const [selectedTeam, setSelectedTeam] = useState<number | null>(null)
   const [creatingInvite, setCreatingInvite] = useState(false)
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!session?.user?.id) return
     
     setLoading(true)
@@ -55,9 +55,9 @@ export default function MessagesPage() {
       setMessages(data || [])
     }
     setLoading(false)
-  }
+  }, [session?.user?.id, supabase, showNotification])
 
-  const fetchUserTeams = async () => {
+  const fetchUserTeams = useCallback(async () => {
     if (!session?.user?.id) return
     
     const { data, error } = await supabase
@@ -70,7 +70,7 @@ export default function MessagesPage() {
     } else {
       setUserTeams(data || [])
     }
-  }
+  }, [session?.user?.id, supabase])
 
   const updateMessageStatus = async (messageId: number, status: 'accepted' | 'declined') => {
     setUpdatingMessage(messageId)
@@ -139,7 +139,7 @@ export default function MessagesPage() {
   useEffect(() => {
     fetchMessages()
     fetchUserTeams()
-  }, [session?.user?.id])
+  }, [session?.user?.id, fetchMessages, fetchUserTeams])
 
   if (!session) return null
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 import Navbar from '@/components/Navbar'
 import { useNotifications } from '@/components/NotificationProvider'
@@ -29,7 +29,7 @@ export default function TeamInvitationsPage() {
   const [updatingInvitation, setUpdatingInvitation] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received')
 
-  const fetchInvitations = async () => {
+  const fetchInvitations = useCallback(async () => {
     if (!session?.user?.id) return
     
     setLoading(true)
@@ -74,7 +74,7 @@ export default function TeamInvitationsPage() {
         message: 'No se pudieron cargar las invitaciones enviadas' 
       })
     } else {
-      const formattedSentData = (sentData || []).map(inv => ({
+      const formattedSentData = (sentData || []).map((inv: any) => ({
         id: inv.id,
         team_id: inv.team_id,
         team_name: inv.team?.name || 'Equipo desconocido',
@@ -89,7 +89,7 @@ export default function TeamInvitationsPage() {
     }
     
     setLoading(false)
-  }
+  }, [session?.user?.id, supabase, showNotification])
 
   const respondToInvitation = async (invitationId: number, response: 'accepted' | 'declined') => {
     setUpdatingInvitation(invitationId)
@@ -135,7 +135,7 @@ export default function TeamInvitationsPage() {
 
   useEffect(() => {
     fetchInvitations()
-  }, [session?.user?.id])
+  }, [session?.user?.id, fetchInvitations])
 
   const getStatusIcon = (status: string) => {
     switch (status) {

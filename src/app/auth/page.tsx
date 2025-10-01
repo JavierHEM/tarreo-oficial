@@ -263,18 +263,44 @@ export default function AuthPage() {
             <p className="text-gray-300 mt-2">INACAP Osorno - Primavera 2025</p>
           </div>
 
-          {/* Tabs login / registro */}
-          <div className="flex gap-2 text-sm">
-            <button type="button" onClick={() => setView('login')} className={`px-3 py-1 rounded ${view==='login'?'bg-white/20':'bg-white/10 hover:bg-white/20'}`}>Iniciar sesión</button>
-            <button type="button" onClick={() => setView('register')} className={`px-3 py-1 rounded ${view==='register'?'bg-white/20':'bg-white/10 hover:bg-white/20'}`}>Registrarse</button>
+          {/* Tabs login / registro - Más prominentes */}
+          <div className="flex gap-2 mb-6">
+            <button 
+              type="button" 
+              onClick={() => setView('login')} 
+              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+                view === 'login' 
+                  ? 'bg-red-500 text-white shadow-lg' 
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'
+              }`}
+            >
+              Iniciar Sesión
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setView('register')} 
+              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+                view === 'register' 
+                  ? 'bg-red-500 text-white shadow-lg' 
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'
+              }`}
+            >
+              Registrarse
+            </button>
           </div>
 
           {view === 'login' && (
-          <form onSubmit={handlePasswordLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Correo Institucional
-              </label>
+          <div className="space-y-4">
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
+              <p className="text-blue-200 text-sm text-center">
+                <strong>¿Ya tienes cuenta?</strong> Ingresa tus datos para acceder
+              </p>
+            </div>
+            <form onSubmit={handlePasswordLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Correo Institucional
+                </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
@@ -306,12 +332,19 @@ export default function AuthPage() {
               {loading ? 'Ingresando...' : 'Iniciar Sesión'}
             </button>
           </form>
+          </div>
           )}
 
           {view === 'register' && (
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Correo Institucional</label>
+          <div className="space-y-4">
+            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-4">
+              <p className="text-green-200 text-sm text-center">
+                <strong>¿Nuevo en Tarreo Gamer?</strong> Crea tu cuenta para participar
+              </p>
+            </div>
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Correo Institucional</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
@@ -339,6 +372,7 @@ export default function AuthPage() {
               {loading ? 'Creando cuenta...' : 'Registrarse'}
             </button>
           </form>
+          </div>
           )}
 
           {view === 'confirm' && (
@@ -381,8 +415,18 @@ export default function AuthPage() {
             </div>
           )}
 
-          <div className="text-center text-sm text-gray-400">
+          <div className="text-center text-sm text-gray-400 space-y-2">
             <p>Solo estudiantes de INACAP con correo institucional válido</p>
+            <div className="flex items-center justify-center gap-4 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <span>Iniciar Sesión: Si ya tienes cuenta</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span>Registrarse: Si es tu primera vez</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
