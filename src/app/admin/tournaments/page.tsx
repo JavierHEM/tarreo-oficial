@@ -24,11 +24,12 @@ export default function AdminTournamentsPage() {
     registration_start: '',
     registration_end: '',
     max_teams: 16,
+    players_per_team: 5,
     description: ''
   })
 
   const reset = () => {
-    setForm({ name: '', game_id: 0, status: 'registration_open', registration_start: '', registration_end: '', max_teams: 16, description: '' })
+    setForm({ name: '', game_id: 0, status: 'registration_open', registration_start: '', registration_end: '', max_teams: 16, players_per_team: 5, description: '' })
     setEditingId(null)
   }
 
@@ -68,6 +69,7 @@ export default function AdminTournamentsPage() {
       registration_start: form.registration_start || null,
       registration_end: form.registration_end || null,
       max_teams: Number(form.max_teams) || null,
+      players_per_team: Number(form.players_per_team) || 5,
       description: form.description || null,
       created_by: session?.user?.id || ''
     }
@@ -97,6 +99,7 @@ export default function AdminTournamentsPage() {
       registration_start: t.registration_start || '',
       registration_end: t.registration_end || '',
       max_teams: t.max_teams || 16,
+      players_per_team: t.players_per_team || 5,
       description: t.description || ''
     })
   }
@@ -159,9 +162,15 @@ export default function AdminTournamentsPage() {
                   <input type="datetime-local" className="w-full px-4 py-2 bg-white/10 border border-white/30 rounded-lg focus:ring-2 focus:ring-red-500" value={form.registration_end} onChange={(e)=>setForm(f=>({...f,registration_end:e.target.value}))} />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Equipos máximos</label>
-                <input type="number" min={2} className="w-full px-4 py-2 bg-white/10 border border-white/30 rounded-lg focus:ring-2 focus:ring-red-500" value={form.max_teams} onChange={(e)=>setForm(f=>({...f,max_teams:Number(e.target.value)}))} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Equipos máximos</label>
+                  <input type="number" min={2} className="w-full px-4 py-2 bg-white/10 border border-white/30 rounded-lg focus:ring-2 focus:ring-red-500" value={form.max_teams} onChange={(e)=>setForm(f=>({...f,max_teams:Number(e.target.value)}))} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Jugadores por equipo</label>
+                  <input type="number" min={1} max={10} className="w-full px-4 py-2 bg-white/10 border border-white/30 rounded-lg focus:ring-2 focus:ring-red-500" value={form.players_per_team} onChange={(e)=>setForm(f=>({...f,players_per_team:Number(e.target.value)}))} />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Descripción</label>
@@ -187,7 +196,9 @@ export default function AdminTournamentsPage() {
                     <div key={t.id} className="bg-white/5 rounded-lg p-4 flex items-center justify-between">
                       <div>
                         <p className="font-medium">{t.name}</p>
-                        <p className="text-sm text-gray-400">Estado: {t.status} • Máx. {t.max_teams || '—'} equipos</p>
+                        <p className="text-sm text-gray-400">
+                          Estado: {t.status} • Máx. {t.max_teams || '—'} equipos • {t.players_per_team || 5} jugadores/equipo
+                        </p>
                       </div>
                       <div className="flex gap-2">
                         <button className="btn-secondary text-sm" onClick={()=>handleEdit(t)}><Edit className="h-4 w-4 mr-1" /> Editar</button>

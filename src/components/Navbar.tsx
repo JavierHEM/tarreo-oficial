@@ -14,6 +14,7 @@ export default function Navbar() {
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [pendingInvitations, setPendingInvitations] = useState(0)
 
   const fetchProfile = useCallback(async () => {
     const { data } = await supabase
@@ -25,11 +26,25 @@ export default function Navbar() {
     if (data) setProfile(data)
   }, [session?.user?.id, supabase])
 
+  const fetchPendingInvitations = useCallback(async () => {
+    if (!session?.user?.id) return
+    
+    const { count } = await supabase
+      .from('team_join_requests')
+      .select('id', { count: 'exact' })
+      .eq('player_id', session.user.id)
+      .eq('status', 'pending')
+      .eq('is_invite', true)
+    
+    setPendingInvitations(count || 0)
+  }, [session?.user?.id, supabase])
+
   useEffect(() => {
     if (session?.user?.id) {
       fetchProfile()
+      fetchPendingInvitations()
     }
-  }, [session, fetchProfile])
+  }, [session, fetchProfile, fetchPendingInvitations])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -97,11 +112,18 @@ export default function Navbar() {
                       </svg>
                       Mensajes
                     </Link>
-                    <Link href="/team-invitations" className="block px-4 py-2 text-sm hover:bg-white/10 flex items-center">
-                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.828 7l2.586 2.586a2 2 0 002.828 0L12.828 7H4.828z" />
-                      </svg>
-                      Invitaciones
+                    <Link href="/team-invitations" className="block px-4 py-2 text-sm hover:bg-white/10 flex items-center justify-between">
+                      <div className="flex items-center">
+                        <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.828 7l2.586 2.586a2 2 0 002.828 0L12.828 7H4.828z" />
+                        </svg>
+                        Invitaciones
+                      </div>
+                      {pendingInvitations > 0 && (
+                        <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                          {pendingInvitations}
+                        </span>
+                      )}
                     </Link>
                     {profile?.role === 'admin' && (
                       <Link href="/admin" className="block px-4 py-2 text-sm hover:bg-white/10 flex items-center">
@@ -163,8 +185,13 @@ export default function Navbar() {
             <Link href="/messages" className="block hover:bg-white/10 px-6 py-2 rounded-md">
               Mensajes
             </Link>
-            <Link href="/team-invitations" className="block hover:bg-white/10 px-6 py-2 rounded-md">
-              Invitaciones
+            <Link href="/team-invitations" className="block hover:bg-white/10 px-6 py-2 rounded-md flex items-center justify-between">
+              <span>Invitaciones</span>
+              {pendingInvitations > 0 && (
+                <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                  {pendingInvitations}
+                </span>
+              )}
             </Link>
             {profile?.role === 'admin' && (
               <Link href="/admin" className="block hover:bg-white/10 px-6 py-2 rounded-md">

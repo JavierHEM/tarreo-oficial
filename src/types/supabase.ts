@@ -71,6 +71,7 @@ export interface Profile {
     online_phase_end?: string
     presencial_date?: string
     max_teams?: number
+    players_per_team?: number
     description?: string
     created_at: string
     created_by: string
