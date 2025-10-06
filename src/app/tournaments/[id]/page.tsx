@@ -54,8 +54,10 @@ export default function TournamentDetailPage() {
       const activeMembers = team.members?.filter((m: any) => m.status === 'active') || []
       return {
         ...team,
-        isComplete: activeMembers.length >= (t?.game?.max_team_size || 1),
-        alreadyRegistered: registeredTeamIds.has(team.id)
+        isComplete: activeMembers.length >= (t?.players_per_team || 1),
+        alreadyRegistered: registeredTeamIds.has(team.id),
+        activeMembersCount: activeMembers.length,
+        requiredPlayers: t?.players_per_team || 1
       }
     })
 
@@ -118,7 +120,11 @@ export default function TournamentDetailPage() {
       return
     }
     if (!team.isComplete) {
-      showNotification({ type: 'warning', title: 'Equipo incompleto', message: 'Completa tu equipo para inscribirte.' })
+      showNotification({ 
+        type: 'warning', 
+        title: 'Equipo incompleto', 
+        message: `Tu equipo necesita ${team.requiredPlayers} jugadores para este torneo. Actualmente tienes ${team.activeMembersCount} jugadores.` 
+      })
       return
     }
 
@@ -229,7 +235,7 @@ export default function TournamentDetailPage() {
                   {tournament.presencial_date && (
                     <div className="flex items-center"><Trophy className="h-4 w-4 mr-2 text-yellow-400" /> Fase Presencial: {tournament.presencial_date?.slice(0,10)}</div>
                   )}
-                  <div className="flex items-center"><UserCheck className="h-4 w-4 mr-2 text-indigo-400" /> Tamaño de equipo: {tournament.game?.max_team_size || 'N/A'} jugadores</div>
+                  <div className="flex items-center"><UserCheck className="h-4 w-4 mr-2 text-indigo-400" /> Jugadores por equipo: {tournament.players_per_team || 5} jugadores</div>
                 </div>
               </div>
 
@@ -266,6 +272,17 @@ export default function TournamentDetailPage() {
             {session && canRegister && (
               <div className="card p-6">
                 <h2 className="font-semibold mb-4">Inscribir equipo</h2>
+                
+                {/* Información de requisitos */}
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-4">
+                  <h3 className="font-medium text-blue-300 mb-2">Requisitos para inscribirse:</h3>
+                  <ul className="text-sm text-gray-300 space-y-1">
+                    <li>• Ser capitán del equipo</li>
+                    <li>• Tener al menos {tournament.players_per_team || 5} jugadores activos en el equipo</li>
+                    <li>• El equipo no debe estar ya inscrito en este torneo</li>
+                  </ul>
+                </div>
+                
                 {myTeams.length === 0 ? (
                   <p className="text-gray-400">No eres capitán de ningún equipo.</p>
                 ) : (
@@ -280,7 +297,7 @@ export default function TournamentDetailPage() {
                         <option value="" disabled>— Selecciona —</option>
                         {myTeams.map((team) => (
                           <option key={team.id} value={team.id} disabled={team.alreadyRegistered || !team.isComplete}>
-                            {team.name} {team.alreadyRegistered ? '(ya inscrito)' : (!team.isComplete ? '(incompleto)' : '')}
+                            {team.name} ({team.activeMembersCount}/{team.requiredPlayers} jugadores) {team.alreadyRegistered ? '(ya inscrito)' : (!team.isComplete ? '(incompleto)' : '')}
                           </option>
                         ))}
                       </select>
